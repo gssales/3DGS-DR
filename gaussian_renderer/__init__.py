@@ -130,6 +130,7 @@ def render(viewpoint_camera, pc : GaussianModel, pipe, bg_color : torch.Tensor, 
             cov3D_precomp = None,
             bg_map = bg_map_const)
 
+        # base_color = base_color.clamp(0,1)
         return {
             "render": base_color,
             "viewspace_points": screenspace_points,
@@ -162,6 +163,7 @@ def render(viewpoint_camera, pc : GaussianModel, pipe, bg_color : torch.Tensor, 
     refl_color = get_refl_color(pc.get_envmap, viewpoint_camera.HWK, viewpoint_camera.R, viewpoint_camera.T, normal_map)
     
     final_image = (1-refl_strength) * base_color + refl_strength * refl_color
+    #final_image = final_image.clamp(0,1)
 
     results = {
         "render": final_image,
