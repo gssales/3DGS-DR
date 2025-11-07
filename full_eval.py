@@ -51,6 +51,8 @@ extra_args = {
     "nerf_synthetic/hotdog": " --white_background --densification_interval_when_prop 100",
     "nerf_synthetic/ficus": " --white_background --densification_interval_when_prop 100",
     "nerf_synthetic/mic": " --white_background --densification_interval_when_prop 100",
+    "nerf_synthetic/chair": " --white_background --densification_interval_when_prop 100",
+    "nerf_synthetic/materials": " --white_background --densification_interval_when_prop 100",
 }
 
 
