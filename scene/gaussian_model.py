@@ -49,26 +49,33 @@ class GaussianModel:
 
     # init_refl_v: do not need to be set when rendering
     def __init__(self, sh_degree = -1):
+        # REVIEW: grau de SH ativo, o modelo começa treinando apenas ordem zero
+        # e depois vai aumentando até 4 graus de SH
         self.active_sh_degree = 0
+        # REVIEW: default 3 (0-index)
         self.max_sh_degree = sh_degree 
         self._xyz = torch.empty(0)
-        self._init_xyz = torch.empty(0)
+        self._init_xyz = torch.empty(0) # REVIEW: não está present no GS
         self._scaling = torch.empty(0)
         self._rotation = torch.empty(0)
         self._opacity = torch.empty(0)
-        self._refl_strength = torch.empty(0)
+        self._refl_strength = torch.empty(0) # REVIEW: Deferred Reflection
         self._features_dc = torch.empty(0) # SH base impl
         self._features_rest = torch.empty(0) # SH base impl
         self.max_radii2D = torch.empty(0)
         self.xyz_gradient_accum = torch.empty(0)
         self.denom = torch.empty(0)
         self.optimizer = None
-        self.free_radius = 0
+        self.free_radius = 0 # REVIEW: não está present no GS
         self.percent_dense = 0
         self.spatial_lr_scale = 0
-        self.init_refl_value = 1e-3
+        self.init_refl_value = 1e-3 # REVIEW: Deferred Reflection
 
+        # REVIEW: Deferred Reflection
+        # Seria uma ref ao env map?
         self.env_map = None
+        
+        # REVIEW: funções de ativação
         self.setup_functions()
 
     def capture(self):

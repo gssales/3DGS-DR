@@ -24,9 +24,9 @@ class _cubemap_encode(torch.autograd.Function):
         embeddings = embeddings.contiguous()
         inputs = inputs.contiguous()
 
-        C = embeddings.shape[1]
-        L = embeddings.shape[2]
-        B = inputs.shape[0]
+        C = embeddings.shape[1] # channels (RBG)
+        L = embeddings.shape[2] # length? resolution
+        B = inputs.shape[0] # numero de vetores/pixels
 
         outputs = torch.empty([C,B],dtype=embeddings.dtype,device=embeddings.device)
 
@@ -98,6 +98,7 @@ class CubemapEncoder(nn.Module):
     def __repr__(self):
         return f"CubemapEncoder: input_dim={self.input_dim} output_dim={self.output_dim} resolution={self.resolution} -> {self.n_elems} interpolation={self.interpolation} seamless={self.seamless}"
 
+    # inputs: lista de vetores de reflexão de cada pixel (ver gaussian_renderer)
     def forward(self, inputs):
         outputs = cubemap_encode(inputs, self.params['Cubemap_texture'], self.params['Cubemap_failv'], self.interp_id, self.seamless)
         return outputs.permute(1,0) # CxN -> NxC

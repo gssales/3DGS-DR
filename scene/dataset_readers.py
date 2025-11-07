@@ -249,6 +249,7 @@ def readCamerasFromTransforms(path, transformsfile, white_background, extension=
             fo = fov2focal(fovx, image.size[0])
 
             W,H = image.size[0], image.size[1]
+            # Matriz intrinseca 
             K = np.array([
                 [fo, 0, W/2],
                 [0, fo, H/2],

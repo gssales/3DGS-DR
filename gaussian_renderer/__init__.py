@@ -28,6 +28,7 @@ def reflection(rayd, normal):
 
 def sample_cubemap_color(rays_d, env_map):
     H,W = rays_d.shape[:2]
+    # ativação do env map sigmoid
     outcolor = torch.sigmoid(env_map(rays_d.reshape(-1,3)))
     outcolor = outcolor.reshape(H,W,3).permute(2,0,1)
     return outcolor
@@ -43,6 +44,27 @@ def render_env_map(pc: GaussianModel):
     env_cood2 = sample_cubemap_color(get_env_rayd2(512,1024), pc.get_envmap)
     return {'env_cood1': env_cood1, 'env_cood2': env_cood2}
 
+# REVIEW: initial_stage é do Deferred Reflection
+# Talvez controla a fase de warm-up
+# {RETURN}
+# se initial_stage: 
+# {
+#   "render": Imagem renderizada
+#   "viewspace_points": 
+#   "visibility_filter": 
+#   "radii": raios das gaussianas  
+# }
+# se não
+# {
+#   "render": Imagem renderizada
+#   "refl_strength_map": imagem de mapa de intensidade reflexão
+#   'normal_map': imagem de mapa de normais
+#   "refl_color_map": imagem de mapa de cor de reflexão
+#   "base_color_map": Imagem báse, sem reflexão
+#   "viewspace_points": 
+#   "visibility_filter": 
+#   "radii": raios das gaussianas
+# }
 def render(viewpoint_camera, pc : GaussianModel, pipe, bg_color : torch.Tensor, scaling_modifier = 1.0, initial_stage = False, more_debug_infos = False):
     """
     Render the scene. 
@@ -83,6 +105,7 @@ def render(viewpoint_camera, pc : GaussianModel, pipe, bg_color : torch.Tensor, 
     Setting_c3 = diff_gaussian_rasterization_c3.GaussianRasterizationSettings
     Setting_c7 = diff_gaussian_rasterization_c7.GaussianRasterizationSettings
     rasterizer_c3 = diff_gaussian_rasterization_c3.GaussianRasterizer(get_setting(Setting_c3))
+    # REVIEW: rasterizer_c7 tem o mesmo processo do rasterizador original, mas com 7 canais [base_color, normal_map, refl_strengh]
     rasterizer_c7 = diff_gaussian_rasterization_c7.GaussianRasterizer(get_setting(Setting_c7))
 
     means3D = pc.get_xyz
@@ -116,6 +139,7 @@ def render(viewpoint_camera, pc : GaussianModel, pipe, bg_color : torch.Tensor, 
     normals = pc.get_min_axis(viewpoint_camera.camera_center) # x,3
     refl_ratio = pc.get_refl
 
+    # REVIEW: input_ts com os canais extras para normais e refl
     input_ts = torch.cat([torch.zeros_like(normals), normals, refl_ratio], dim=-1)
     bg_map = torch.cat([bg_map_const, torch.zeros(4,imH,imW, device='cuda')], dim=0)
     out_ts, _radii = rasterizer_c7(

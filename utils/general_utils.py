@@ -201,7 +201,9 @@ def get_env_rayd2(H,W):
     return env_rayd2
 
 pixel_camera = None
+# REVIEW: gera os raios de cada pixel pela camera
 def sample_camera_rays(HWK, R, T):
+    # Height Width K Matriz Intrinseca, Rotação, Translação
     H,W,K = HWK
     R = R.T # NOTE!!! the R rot matrix is transposed save in 3DGS
     

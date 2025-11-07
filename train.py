@@ -37,6 +37,7 @@ def training(dataset, opt, pipe, testing_iterations, saving_iterations, checkpoi
     first_iter = 0
     tb_writer = prepare_output_and_logger(dataset)
     
+    #REVIEW: parametros inseridos para o deferred reflection
     INIT_UNITIL_ITER = opt.init_until_iter #3000
     FR_OPTIM_FROM_ITER = opt.feature_rest_from_iter
     NORMAL_PROP_UNTIL_ITER = opt.normal_prop_until_iter + opt.longer_prop_iter #24_000
@@ -56,6 +57,7 @@ def training(dataset, opt, pipe, testing_iterations, saving_iterations, checkpoi
 
     gaussians = GaussianModel(dataset.sh_degree)
     scene = Scene(dataset, gaussians) # init all parameters(pos,scale,rot...) from pcds
+    # REVIEW: Inclui como parametros treináveis as refl_strengh e os parametros do env_map
     gaussians.training_setup(opt)
     if checkpoint:
         (model_params, first_iter) = torch.load(checkpoint)
@@ -111,6 +113,10 @@ def training(dataset, opt, pipe, testing_iterations, saving_iterations, checkpoi
         # Render
         if (iteration - 1) == debug_from:
             pipe.debug = True
+
+        # REVIEW: Nos primeiros estágios faz a mesma rasterização que 3DGS usando o diff_gaussian_rasterizer_c3
+        # quando inicia a otimização da reflexão, as rasterização também retorna canais de refl_strengh e normal map. 
+        # A função render combina esses mapas, calculando a cor de reflexão do env map, para gerar a imagem final aqui
         render_pkg = render(viewpoint_cam, gaussians, pipe, background, initial_stage=initial_stage)
         image, viewspace_point_tensor, visibility_filter, radii = render_pkg["render"], render_pkg["viewspace_points"], render_pkg["visibility_filter"], render_pkg["radii"]
 
@@ -125,6 +131,8 @@ def training(dataset, opt, pipe, testing_iterations, saving_iterations, checkpoi
             return None if not USE_ENV_SCOPE else \
                 torch.sum((gaussians.get_xyz - ENV_CENTER[None])**2, dim=-1) > ENV_RADIUS**2
 
+        # REVIEW: De alguma forma isso limita a reflexão às Gaussianas dentro do raio ENV_RADIUS no centro ENV_CENTER do modelo
+        # mas por que isso afeta a loss??
         if USE_ENV_SCOPE and 'refl_strength_map' in render_pkg:
             refls = gaussians.get_refl
             refl_msk_loss = refls[get_outside_msk()].mean()

@@ -457,8 +457,10 @@ renderCUDA(
 	float bg_color[C];
 	if (inside) 
 		for (int i = 0; i < C; i++) {
+			// REVIEW: gradiente do pixel de cada canal
 			dL_dpixel[i] = dL_dpixels[i * H * W + pix_id];
 			bg_color[i] = bg_map[i * H * W + pix_id];
+			// REVIEW: gradiente de contribuição do background?
 			dL_dbg[i * H * W + pix_id] = T_final * dL_dpixel[i]; ///////////////////////////////////////////////////////
 		}
 
