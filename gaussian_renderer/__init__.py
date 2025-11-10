@@ -65,7 +65,7 @@ def render_env_map(pc: GaussianModel):
 #   "visibility_filter": 
 #   "radii": raios das gaussianas
 # }
-def render(viewpoint_camera, pc : GaussianModel, pipe, bg_color : torch.Tensor, scaling_modifier = 1.0, initial_stage = False, more_debug_infos = False):
+def render(viewpoint_camera, pc : GaussianModel, pipe, bg_color : torch.Tensor, scaling_modifier = 1.0, initial_stage = False, more_debug_infos = False, img_mask = None):
     """
     Render the scene. 
     
@@ -115,6 +115,11 @@ def render(viewpoint_camera, pc : GaussianModel, pipe, bg_color : torch.Tensor, 
     rotations = pc.get_rotation
     shs = pc.get_features
     
+    if img_mask is None:
+        mask = torch.full((1, int(viewpoint_camera.image_height), int(viewpoint_camera.image_width)), 1.0).float().cuda()
+    else:
+        mask = img_mask
+    
     bg_map_const = bg_color[:,None,None].cuda().expand(3, imH, imW)
     #bg_map_zero = torch.zeros_like(bg_map_const)
 
@@ -143,7 +148,7 @@ def render(viewpoint_camera, pc : GaussianModel, pipe, bg_color : torch.Tensor, 
     # REVIEW: input_ts com os canais extras para normais e refl
     input_ts = torch.cat([torch.zeros_like(normals), normals, refl_ratio], dim=-1)
     bg_map = torch.cat([bg_map_const, torch.zeros(4,imH,imW, device='cuda')], dim=0)
-    out_ts, _radii = rasterizer_c7(
+    out_ts, _radii, is_rendered = rasterizer_c7(
         means3D = means3D,
         means2D = means2D,
         shs = shs,
@@ -152,7 +157,8 @@ def render(viewpoint_camera, pc : GaussianModel, pipe, bg_color : torch.Tensor, 
         scales = scales,
         rotations = rotations,
         cov3D_precomp = None,
-        bg_map = bg_map)
+        bg_map = bg_map,
+        img_mask = mask)
     
     base_color = out_ts[:3,...] # 3,H,W
     refl_strength = out_ts[6:7,...] #
@@ -173,7 +179,8 @@ def render(viewpoint_camera, pc : GaussianModel, pipe, bg_color : torch.Tensor, 
         "base_color_map": base_color,
         "viewspace_points": screenspace_points,
         "visibility_filter" : _radii > 0,
-        "radii": _radii
+        "radii": _radii,
+        "is_rendered": is_rendered
     }
         
     return results

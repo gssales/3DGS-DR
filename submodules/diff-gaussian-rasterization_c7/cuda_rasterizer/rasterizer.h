@@ -38,6 +38,7 @@ namespace CudaRasterizer
 			const float* means3D,
 			const float* shs,
 			float* colors_precomp,
+			const float* img_mask,
 			const float* opacities,
 			const float* scales,
 			const float scale_modifier,
@@ -51,6 +52,7 @@ namespace CudaRasterizer
 			const bool prefiltered,
 			float* out_color,
 			int* radii = nullptr,
+			int* is_rendered = nullptr,
 			bool debug = false);
 
 		static void backward(

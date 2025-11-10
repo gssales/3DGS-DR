@@ -32,11 +32,12 @@ std::function<char*(size_t N)> resizeFunctional(torch::Tensor& t) {
     return lambda;
 }
 
-std::tuple<int, torch::Tensor, torch::Tensor, torch::Tensor, torch::Tensor, torch::Tensor>
+std::tuple<int, torch::Tensor, torch::Tensor, torch::Tensor, torch::Tensor, torch::Tensor, torch::Tensor>
 RasterizeGaussiansCUDA(
 	//const torch::Tensor& background,
 	const torch::Tensor& means3D,
     torch::Tensor& colors,
+	const torch::Tensor &img_mask,
     const torch::Tensor& opacity,
 	const torch::Tensor& scales,
 	const torch::Tensor& rotations,
@@ -68,6 +69,7 @@ RasterizeGaussiansCUDA(
 
   torch::Tensor out_color = torch::full({NUM_CHANNELS, H, W}, 0.0, float_opts);
   torch::Tensor radii = torch::full({P}, 0, means3D.options().dtype(torch::kInt32));
+	torch::Tensor is_rendered = torch::full({P}, 0, means3D.options().dtype(torch::kInt32));
   
   torch::Device device(torch::kCUDA);
   torch::TensorOptions options(torch::kByte);
@@ -97,6 +99,7 @@ RasterizeGaussiansCUDA(
 		means3D.contiguous().data<float>(),
 		sh.contiguous().data_ptr<float>(),
 		colors.contiguous().data<float>(), 
+		img_mask.contiguous().data<float>(),
 		opacity.contiguous().data<float>(), 
 		scales.contiguous().data_ptr<float>(),
 		scale_modifier,
@@ -111,13 +114,14 @@ RasterizeGaussiansCUDA(
 		prefiltered,
 		out_color.contiguous().data<float>(),
 		radii.contiguous().data<int>(),
+		is_rendered.contiguous().data<int>(),
 		debug);
   }
   else {
 	// if no gaussians, the out_color is default to bg_color
 	out_color = bg_map;
   }
-  return std::make_tuple(rendered, out_color, radii, geomBuffer, binningBuffer, imgBuffer);
+  return std::make_tuple(rendered, out_color, radii, geomBuffer, binningBuffer, imgBuffer, is_rendered);
 }
 
 std::tuple<torch::Tensor, torch::Tensor, torch::Tensor, torch::Tensor, torch::Tensor, torch::Tensor, torch::Tensor, torch::Tensor, torch::Tensor>
