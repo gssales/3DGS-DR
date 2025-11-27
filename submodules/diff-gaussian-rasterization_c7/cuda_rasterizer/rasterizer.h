@@ -51,6 +51,7 @@ namespace CudaRasterizer
 			const float tan_fovx, float tan_fovy,
 			const bool prefiltered,
 			float* out_color,
+			float* out_others,
 			int* radii = nullptr,
 			int* is_rendered = nullptr,
 			bool debug = false);
@@ -75,6 +76,7 @@ namespace CudaRasterizer
 			char* binning_buffer,
 			char* image_buffer,
 			const float* dL_dpix,
+			const float* dL_dothers,
 			float* dL_dmean2D,
 			float* dL_dmean2D_,
 			float* dL_dconic,

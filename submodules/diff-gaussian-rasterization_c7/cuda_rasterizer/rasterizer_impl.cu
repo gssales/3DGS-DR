@@ -218,6 +218,7 @@ int CudaRasterizer::Rasterizer::forward(
 	const float tan_fovx, float tan_fovy,
 	const bool prefiltered,
 	float* out_color,
+	float* out_others,
 	int* radii,
 	int* is_rendered,
 	bool debug)
@@ -332,6 +333,7 @@ int CudaRasterizer::Rasterizer::forward(
 		//background,
 		bg_map,
 		out_color,
+		out_others,
 		is_rendered), debug)
 
 	return num_rendered;
@@ -359,6 +361,7 @@ void CudaRasterizer::Rasterizer::backward(
 	char* binning_buffer,
 	char* img_buffer,
 	const float* dL_dpix,
+	const float* dL_dothers,
 	float* dL_dmean2D,
 	float* dL_dmean2D_,
 	float* dL_dconic,
@@ -404,6 +407,7 @@ void CudaRasterizer::Rasterizer::backward(
 		imgState.accum_alpha,
 		imgState.n_contrib,
 		dL_dpix,
+		dL_dothers,
 		(float3*)dL_dmean2D,
 		(float3*)dL_dmean2D_,
 		(float4*)dL_dconic,

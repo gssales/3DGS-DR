@@ -50,13 +50,18 @@ def render_set(model_path, name, iteration, views, gaussians, pipeline, backgrou
         render_time = time.time() - t1
         render_times.append(render_time)
         rendering = render_pkg["render"][None]
-        # gt = view.original_image[None, 0:3, :, :]
+        gt = view.original_image[None, 0:3, :, :]
+        
+        gt_alpha_mask = view.gt_alpha_mask
+        if gt_alpha_mask is not None:
+            gt = gt * gt_alpha_mask + (1-gt_alpha_mask) * background[:, None, None]
+            rendering = rendering * gt_alpha_mask + (1-gt_alpha_mask) * background[:, None, None]
 
         mask = render_pkg["is_rendered"] == 1
         visible_gaussians_[mask] = 1
 
         torchvision.utils.save_image(rendering, os.path.join(render_path, '{0:05d}'.format(idx) + ".png"))
-        # torchvision.utils.save_image(gt, os.path.join(gts_path, '{0:05d}'.format(idx) + ".png"))
+        torchvision.utils.save_image(gt, os.path.join(gts_path, '{0:05d}'.format(idx) + ".png"))
 
         if render_normals:
             normals = render_pkg["normal_map"]

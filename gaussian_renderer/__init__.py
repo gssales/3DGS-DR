@@ -149,7 +149,7 @@ def render(viewpoint_camera, pc : GaussianModel, pipe, bg_color : torch.Tensor, 
     # REVIEW: input_ts com os canais extras para normais e refl
     input_ts = torch.cat([torch.zeros_like(normals), normals, refl_ratio], dim=-1)
     bg_map = torch.cat([bg_map_const, torch.zeros(4,imH,imW, device='cuda')], dim=0)
-    out_ts, _radii, is_rendered = rasterizer_c7(
+    out_ts, _radii, alpha, is_rendered = rasterizer_c7(
         means3D = means3D,
         means2D = means2D,
         shs = shs,
@@ -174,6 +174,7 @@ def render(viewpoint_camera, pc : GaussianModel, pipe, bg_color : torch.Tensor, 
 
     results = {
         "render": final_image,
+        "alpha": alpha,
         "refl_strength_map": refl_strength,
         'normal_map': normal_map.permute(2,0,1),
         "refl_color_map": refl_color,
