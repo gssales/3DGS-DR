@@ -54,7 +54,9 @@ RasterizeGaussiansCUDA(
 	const int degree,
 	const torch::Tensor& campos,
 	const bool prefiltered,
-	const bool debug)
+	const bool debug,
+	const bool apply_mask,
+	const bool slice)
 {
   if (means3D.ndimension() != 2 || means3D.size(1) != 3) {
     AT_ERROR("means3D must have dimensions (num_points, 3)");
@@ -117,7 +119,9 @@ RasterizeGaussiansCUDA(
 		out_others.contiguous().data<float>(),
 		radii.contiguous().data<int>(),
 		is_rendered.contiguous().data<int>(),
-		debug);
+		debug,
+		apply_mask,
+		slice);
   }
   else {
 	// if no gaussians, the out_color is default to bg_color

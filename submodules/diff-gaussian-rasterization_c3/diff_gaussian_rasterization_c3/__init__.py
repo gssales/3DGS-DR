@@ -176,6 +176,8 @@ class GaussianRasterizationSettings(NamedTuple):
     campos : torch.Tensor
     prefiltered : bool
     debug : bool
+    apply_mask : bool
+    slice : bool
 
 class GaussianRasterizer(nn.Module):
     def __init__(self, raster_settings):

@@ -54,7 +54,9 @@ namespace CudaRasterizer
 			float* out_others,
 			int* radii = nullptr,
 			int* is_rendered = nullptr,
-			bool debug = false);
+			bool debug = false,
+			bool apply_mask = false,
+			bool slice = false);
 
 		static void backward(
 			const int P, int D, int M, int R,

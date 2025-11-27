@@ -97,7 +97,9 @@ def render(viewpoint_camera, pc : GaussianModel, pipe, bg_color : torch.Tensor, 
             sh_degree=pc.active_sh_degree,
             campos=viewpoint_camera.camera_center,
             prefiltered=False,
-            debug=pipe.debug
+            debug=pipe.debug,
+            apply_mask=False,
+            slice=False,
         )
         return raster_settings
     
@@ -162,7 +164,7 @@ def render(viewpoint_camera, pc : GaussianModel, pipe, bg_color : torch.Tensor, 
         img_mask = mask)
     
     base_color = out_ts[:3,...] # 3,H,W
-    refl_strength = out_ts[6:7,...] #
+    refl_strength = out_ts[6:7,...] #.
     normal_map = out_ts[3:6,...] 
 
     normal_map = normal_map.permute(1,2,0)

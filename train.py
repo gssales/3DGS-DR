@@ -298,11 +298,11 @@ def training_report(tb_writer, iteration, Ll1, loss, l1_loss, elapsed, testing_i
                     res = renderFunc(viewpoint, scene.gaussians, more_debug_infos = True, *renderArgs)
                     image = torch.clamp(res["render"], 0.0, 1.0)
                     alpha = torch.clamp(res["alpha"], 0.0, 1.0)
+                    image = image * alpha + (1-alpha) * background[:, None, None]
+                    gt_image = torch.clamp(viewpoint.original_image.to("cuda"), 0.0, 1.0)
                     gt_alpha_mask = viewpoint.gt_alpha_mask
                     if gt_alpha_mask is not None:
                         gt_image = gt_image * gt_alpha_mask + (1-gt_alpha_mask) * background[:, None, None]
-                    image = image * alpha + (1-alpha) * background[:, None, None]
-                    gt_image = torch.clamp(viewpoint.original_image.to("cuda"), 0.0, 1.0)
                     if tb_writer and (idx < 5):
                         for maps_name in res.keys():
                             if 'map' in maps_name:

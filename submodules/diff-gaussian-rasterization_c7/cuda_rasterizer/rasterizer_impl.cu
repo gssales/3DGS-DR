@@ -221,7 +221,9 @@ int CudaRasterizer::Rasterizer::forward(
 	float* out_others,
 	int* radii,
 	int* is_rendered,
-	bool debug)
+	bool debug,
+	bool apply_mask,
+	bool slice)
 {
 	const float focal_y = height / (2.0f * tan_fovy);
 	const float focal_x = width / (2.0f * tan_fovx);
@@ -324,6 +326,10 @@ int CudaRasterizer::Rasterizer::forward(
 		imgState.ranges,
 		binningState.point_list,
 		width, height,
+		scale_modifier,
+		apply_mask,
+		slice,
+		means3D,
 		geomState.means2D,
 		feature_ptr,
 		img_mask,

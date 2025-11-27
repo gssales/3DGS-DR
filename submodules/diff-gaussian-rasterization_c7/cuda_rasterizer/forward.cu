@@ -270,6 +270,10 @@ renderCUDA(
 	const uint2* __restrict__ ranges,
 	const uint32_t* __restrict__ point_list,
 	int W, int H,
+	const float max_dist_debug,
+	const bool apply_mask,
+	const bool slice,
+	const float* orig_points,
 	const float2* __restrict__ points_xy_image,
 	const float* __restrict__ features,
 	const float* __restrict__ img_mask,
@@ -336,6 +340,14 @@ renderCUDA(
 			// Keep track of current position in range
 			contributor++;
 
+			// ====================
+
+			float3 point = ((float3*)orig_points)[collected_id[j]];
+			if (slice && (point.x >= max_dist_debug || point.x <= -max_dist_debug))
+				continue;
+
+			// ====================
+
 			// Resample using conic matrix (cf. "Surface 
 			// Splatting" by Zwicker et al., 2001)
 			float2 xy = collected_xy[j];
@@ -392,7 +404,7 @@ renderCUDA(
 			// pixel.
 			last_contributor = contributor;
 			
-			// if (img_mask[H * W + pix_id] == 1.0)
+			if (!apply_mask || img_mask[H * W + pix_id] == 1.0)
 				atomicExch(&is_rendered[collected_id[j]], 1);
 		}
 	}
@@ -414,6 +426,10 @@ void FORWARD::render(
 	const uint2* ranges,
 	const uint32_t* point_list,
 	int W, int H,
+	const float max_dist_debug,
+	const bool apply_mask,
+	const bool slice,
+	const float* orig_points,
 	const float2* means2D,
 	const float* colors,
 	const float* img_mask,
@@ -429,6 +445,10 @@ void FORWARD::render(
 		ranges,
 		point_list,
 		W, H,
+		max_dist_debug,
+		apply_mask,
+		slice,
+		orig_points,
 		means2D,
 		colors,
 		img_mask,
