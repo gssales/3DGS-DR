@@ -239,15 +239,15 @@ def readCamerasFromTransforms(path, transformsfile, white_background, extension=
             image_name = Path(cam_name).stem
             image = Image.open(image_path)
 
-            im_data = np.array(image.convert("RGBA"))
+            mask_path = os.path.join(path, frame["file_path"] + "_alpha" + extension)
+            if os.path.exists(mask_path):
+                mask = Image.open(mask_path)
+                im_data = np.array(image.convert("RGB"))
+                a_data = np.array(mask.convert("RGB"))[..., 0:1]
+                arr = np.concatenate((im_data, a_data), axis=-1)
+                image = Image.fromarray(np.array(arr, dtype=np.byte), "RGBA")
 
-            bg = np.array([1,1,1]) if white_background else np.array([0, 0, 0])
-
-            norm_data = im_data / 255.0
-            arr = norm_data[:,:,:3] * norm_data[:, :, 3:4] + bg * (1 - norm_data[:, :, 3:4])
-            image = Image.fromarray(np.array(arr*255.0, dtype=np.byte), "RGB")
             fo = fov2focal(fovx, image.size[0])
-
             W,H = image.size[0], image.size[1]
             # Matriz intrinseca 
             K = np.array([

@@ -23,7 +23,7 @@ def render_net_image(render_pkg, render_items, render_mode, camera):
     if output == 'depth':
         net_image = render_pkg['depth']
     elif output == 'alpha':
-        net_image = render_pkg["rend_alpha"]
+        net_image = render_pkg["alpha"].cpu().repeat(3,1,1)
     elif output == 'normal':
         net_image = render_pkg["normal_map"]
         net_image = (net_image+1)/2

@@ -55,7 +55,6 @@ def view(dataset, pipe, iteration):
                         net_image = render_net_image(render_pkg, view_render_options, render_mode, custom_cam)
                         net_image_bytes = memoryview((torch.clamp(net_image, min=0, max=1.0) * 255).byte().permute(1, 2, 0).contiguous().cpu().numpy())
                     metrics_dict = {
-                        "_METHOD": "3DGS-DR",
                         "#": gaussians.get_opacity.shape[0],
                         "it": iteration
                         # Add more metrics as needed

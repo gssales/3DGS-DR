@@ -21,7 +21,8 @@ def loadCam(args, id, cam_info, resolution_scale):
     orig_w, orig_h = cam_info.image.size
 
     if args.resolution in [1, 2, 4, 6, 8]:
-        resolution = round(orig_w/(resolution_scale * args.resolution)), round(orig_h/(resolution_scale * args.resolution))
+        scale = resolution_scale * args.resolution
+        resolution = round(orig_w / scale), round(orig_h / scale)
     else:  # should be a type that converts to float
         if args.resolution == -1:
             if orig_w > 1600: ###
@@ -49,7 +50,7 @@ def loadCam(args, id, cam_info, resolution_scale):
     gt_image = resized_image_rgb[:3, ...]
     loaded_mask = None
 
-    if resized_image_rgb.shape[1] == 4:
+    if resized_image_rgb.shape[0] == 4:
         loaded_mask = resized_image_rgb[3:4, ...]
 
     refl_path = os.path.join(

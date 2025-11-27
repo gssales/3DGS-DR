@@ -35,7 +35,7 @@ densify_intv in prop -> 100
 
 def training(dataset: ModelParams, opt, pipe, testing_iterations, saving_iterations, checkpoint_iterations, checkpoint, debug_from):
 
-    view_render_options = ["RGB", "Base Color", "Refl. Strength", "Normal", "Refl. Color"]
+    view_render_options = ["RGB", "Base Color", "Refl. Strength", "Normal", "Refl. Color", "Alpha"]
 
     first_iter = 0
     tb_writer = prepare_output_and_logger(dataset)
@@ -121,14 +121,24 @@ def training(dataset: ModelParams, opt, pipe, testing_iterations, saving_iterati
         # quando inicia a otimização da reflexão, as rasterização também retorna canais de refl_strengh e normal map. 
         # A função render combina esses mapas, calculando a cor de reflexão do env map, para gerar a imagem final aqui
         render_pkg = render(viewpoint_cam, gaussians, pipe, background, initial_stage=initial_stage)
-        image, viewspace_point_tensor, visibility_filter, radii = render_pkg["render"], render_pkg["viewspace_points"], render_pkg["visibility_filter"], render_pkg["radii"]
+        image, viewspace_point_tensor, visibility_filter, radii, alpha = render_pkg["render"], render_pkg["viewspace_points"], render_pkg["visibility_filter"], render_pkg["radii"], render_pkg["alpha"]
 
         # GT
         gt_image = viewpoint_cam.original_image.cuda()
+        gt_alpha_mask = viewpoint_cam.gt_alpha_mask
+
+        if gt_alpha_mask is not None:
+            gt_alpha_mask = gt_alpha_mask.cuda()
+            gt_image = gt_image * gt_alpha_mask + (1-gt_alpha_mask) * background[:, None, None]
+        image = image * alpha + (1-alpha) * background[:, None, None]
+
         # Loss
         Ll1 = l1_loss(image, gt_image)
         loss = (1.0 - opt.lambda_dssim) * Ll1 + opt.lambda_dssim * (1.0 - ssim(image, gt_image))
         
+        # in synthetic scenes, forces gaussian of the same color as the background to be transparent
+        if gt_alpha_mask is not None:
+            loss += l1_loss(alpha, gt_alpha_mask)
 
         def get_outside_msk():
             return None if not USE_ENV_SCOPE else \

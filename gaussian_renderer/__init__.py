@@ -124,7 +124,7 @@ def render(viewpoint_camera, pc : GaussianModel, pipe, bg_color : torch.Tensor, 
     #bg_map_zero = torch.zeros_like(bg_map_const)
 
     if initial_stage:
-        base_color, _radii = rasterizer_c3(
+        base_color, _radii, alpha = rasterizer_c3(
             means3D = means3D,
             means2D = means2D,
             shs = shs,
@@ -138,6 +138,7 @@ def render(viewpoint_camera, pc : GaussianModel, pipe, bg_color : torch.Tensor, 
         # base_color = base_color.clamp(0,1)
         return {
             "render": base_color,
+            "alpha": alpha,
             "viewspace_points": screenspace_points,
             "visibility_filter" : _radii > 0,
             "radii": _radii}
