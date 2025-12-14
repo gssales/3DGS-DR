@@ -94,6 +94,8 @@ class OptimizationParams(ParamGroup):
         self.densification_interval_when_prop = 500
         self.longer_prop_iter = 0
 
+        self.use_alpha_mask = False
+
         self.use_env_scope = False
         self.env_scope_center = [0.,0.,0.]
         self.env_scope_radius = 0.0

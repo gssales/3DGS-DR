@@ -135,14 +135,12 @@ def fetchPly(path):
     plydata = PlyData.read(path)
     vertices = plydata['vertex']
     positions = np.vstack([vertices['x'], vertices['y'], vertices['z']]).T
+    normals = np.vstack([vertices['nx'], vertices['ny'], vertices['nz']]).T
     try:
         colors = np.vstack([vertices['red'], vertices['green'], vertices['blue']]).T / 255.0
-        normals = np.vstack([vertices['nx'], vertices['ny'], vertices['nz']]).T
     except:
         print('Load Ply color and normals failed, random init')
         colors = np.random.rand(*positions.shape) / 255.0
-        normals = np.random.rand(*positions.shape)
-        normals = normals / np.linalg.norm(normals, axis=-1, keepdims=True)
     return BasicPointCloud(points=positions, colors=colors, normals=normals)
 
 def storePly(path, xyz, rgb):
