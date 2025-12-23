@@ -102,7 +102,7 @@ def main():
     parser.add_argument("--skip_metrics", action="store_true")
     parser.add_argument("--output_path", default="/mnt/output/3dgs-dr/materials/")
     parser.add_argument("--materials", type=str, default="/mnt/data/materials")
-    parser.add_argument("--iteration", type=int, default=31000)
+    parser.add_argument("--iteration", type=int, default=61000)
     parser.add_argument("--dry_run", action="store_true")
     parser.add_argument("--logs_dir", default="logs", help="Logs folder inside output_path")
 

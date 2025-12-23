@@ -95,6 +95,7 @@ class OptimizationParams(ParamGroup):
         self.longer_prop_iter = 0
 
         self.use_alpha_mask = False
+        self.random_background_color = False
 
         self.use_env_scope = False
         self.env_scope_center = [0.,0.,0.]
