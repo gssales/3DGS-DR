@@ -46,6 +46,7 @@ class ModelParams(ParamGroup):
         self._images = "images"
         self._resolution = -1
         self._white_background = False
+        self.random_background_color = False
         self.data_device = "cuda"
         self.eval = False
         super().__init__(parser, "Loading Parameters", sentinel)
@@ -95,7 +96,6 @@ class OptimizationParams(ParamGroup):
         self.longer_prop_iter = 0
 
         self.use_alpha_mask = False
-        self.random_background_color = False
 
         self.use_env_scope = False
         self.env_scope_center = [0.,0.,0.]
