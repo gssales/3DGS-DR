@@ -114,6 +114,9 @@ def training(dataset: ModelParams, opt, pipe, testing_iterations, saving_iterati
         if not viewpoint_stack:
             viewpoint_stack = scene.getTrainCameras().copy()
         viewpoint_cam = viewpoint_stack.pop(randint(0, len(viewpoint_stack)-1))
+        
+        if dataset.random_background_color:
+            background = torch.rand(3, dtype=torch.float32, device="cuda")
 
         # Render
         if (iteration - 1) == debug_from:
@@ -168,7 +171,8 @@ def training(dataset: ModelParams, opt, pipe, testing_iterations, saving_iterati
                 progress_bar.close()
 
             # Log and save
-            training_report(tb_writer, iteration, Ll1, loss, l1_loss, iter_start.elapsed_time(iter_end), testing_iterations, scene, background, render, (pipe, background), model_path=dataset.model_path)
+            bg = torch.tensor(bg_color, dtype=torch.float32, device="cuda")
+            training_report(tb_writer, iteration, Ll1, loss, l1_loss, iter_start.elapsed_time(iter_end), testing_iterations, scene, bg, render, (pipe, bg), model_path=dataset.model_path)
             if (iteration in saving_iterations or iteration == TOT_ITER-1):
                 print("\n[ITER {}] Saving Gaussians".format(iteration))
                 scene.save(iteration)
@@ -231,7 +235,7 @@ def training(dataset: ModelParams, opt, pipe, testing_iterations, saving_iterati
                     net_image_bytes = None
                     custom_cam, do_training, do_shs_python, do_rot_scale_python, keep_alive, scaling_modifer, render_mode = network_gui.receive()
                     if custom_cam != None:
-                        render_pkg = render(custom_cam, gaussians, pipe, background, scaling_modifer)
+                        render_pkg = render(custom_cam, gaussians, pipe, bg, scaling_modifer)
                         net_image = render_net_image(render_pkg, view_render_options, render_mode, custom_cam)
                         net_image_bytes = memoryview((torch.clamp(net_image, min=0, max=1.0) * 255).byte().permute(1, 2, 0).contiguous().cpu().numpy())
                     metrics_dict = {
