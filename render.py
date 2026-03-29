@@ -39,12 +39,8 @@ def render_set(model_path, name, iteration, views, gaussians, pipeline, backgrou
     torchvision.utils.save_image(ltres['env_cood1'], os.path.join(model_path, 'light1_{}.png'.format(iteration)))
     torchvision.utils.save_image(ltres['env_cood2'], os.path.join(model_path, 'light2_{}.png'.format(iteration)))
 
-    render_times = []
     for idx, view in enumerate(tqdm(views, desc="Rendering progress")):
-        t1 = time.time()
         render_pkg = render(view, gaussians, pipeline, background)
-        render_time = time.time() - t1
-        render_times.append(render_time)
         rendering = render_pkg["render"][None]
         gt = view.original_image[None, 0:3, :, :]
 
@@ -55,9 +51,6 @@ def render_set(model_path, name, iteration, views, gaussians, pipeline, backgrou
             normals = render_pkg["normal_map"]
             normals = normals*0.5+0.5
             torchvision.utils.save_image(normals, os.path.join(normals_path, '{0:05d}'.format(idx) + ".png"))
-
-    fps = 1.0/np.array(render_times).mean()
-    print('fps:{}'.format(fps))
 
 
 def render_sets(dataset : ModelParams, iteration : int, pipeline : PipelineParams, skip_train : bool, skip_test : bool, render_normals : bool):
