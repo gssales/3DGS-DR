@@ -78,7 +78,7 @@ def extract_iteration(key: str):
     return -1
   return int(m[-1])
 
-def pick_best_key(results: dict):
+def pick_best_key(results):
   """
   Pick the key with the highest numeric iteration.
   Fallback: first key if parsing fails.
@@ -86,8 +86,7 @@ def pick_best_key(results: dict):
   if not results:
     return None
 
-  keys = list(results.keys())
-  best = max(keys, key=lambda k: extract_iteration(k))
+  best = max(results, key=lambda k: extract_iteration(k))
   return best
 
 def evaluate(model_path, source_path):
