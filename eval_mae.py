@@ -1,6 +1,7 @@
 from pathlib import Path
 import traceback
 import os, sys
+import re
 from natsort import natsorted
 from tqdm import tqdm
 from PIL import Image
@@ -65,6 +66,30 @@ def compute_mae(pred: torch.Tensor, gt: torch.Tensor, eps: float = 1e-8):
 
   return angular_error[~torch.isnan(angular_error)].mean().item()
 
+def extract_iteration(key: str):
+  """
+  Extract a numeric iteration from keys like:
+    'ref_gs_30000' -> 30000
+    'ours_31000'   -> 31000
+  If none found, return -1 so it loses in max().
+  """
+  m = re.findall(r"(\d+)", key)
+  if not m:
+    return -1
+  return int(m[-1])
+
+def pick_best_key(results: dict):
+  """
+  Pick the key with the highest numeric iteration.
+  Fallback: first key if parsing fails.
+  """
+  if not results:
+    return None
+
+  keys = list(results.keys())
+  best = max(keys, key=lambda k: extract_iteration(k))
+  return best
+
 def evaluate(model_path, source_path):
   try:          
     if not model_path.is_dir():
@@ -75,36 +100,39 @@ def evaluate(model_path, source_path):
     if not test_dir.exists():
       print(f"[!] No test directory found in {model_path}, skipping.")
       return
+    
+    best_method = pick_best_key(os.listdir(test_dir))
+    if best_method is None:
+      print(f"[!] No valid method directories found in {test_dir}, skipping.")
+      return
 
-    for method in os.listdir(test_dir):
-      print(f"  [+] Processing Method: {method}")
+    method_dir = test_dir / best_method
 
-      method_dir = test_dir / method
+    normal_renders_dir = method_dir / "normals"
+    normal_gts_dir = Path(source_path) / "test"
+    normal_renders, normal_gts, alphas = readNormalsImages(normal_renders_dir, normal_gts_dir)
 
-      normal_renders_dir = method_dir / "normals"
-      normal_gts_dir = Path(source_path) / "test"
-      normal_renders, normal_gts, alphas = readNormalsImages(normal_renders_dir, normal_gts_dir)
+    mean_angular_error = 0.0
+    for idx in tqdm(range(len(normal_renders)), desc="Generating tiles"):
+      normal_gt = normal_gts[idx]
+      normal_gt = (normal_gt-0.5)*2
+      normal_gt = normal_gt[0].to(torch.float32)
 
-      mean_angular_error = 0.0
-      for idx in tqdm(range(len(normal_renders)), desc="Generating tiles"):
-        normal_gt = normal_gts[idx]
-        normal_gt = (normal_gt-0.5)*2
-        normal_gt = normal_gt[0].to(torch.float32)
+      normal_render = normal_renders[idx]
+      normal_render = (normal_render-0.5)*2
+      normal_render = normal_render[0].to(torch.float32)
 
-        normal_render = normal_renders[idx]
-        normal_render = (normal_render-0.5)*2
-        normal_render = normal_render[0].to(torch.float32)
+      angular_error = angular_error_map(normal_render, normal_gt)
 
-        angular_error = angular_error_map(normal_render, normal_gt)
+      if len(alphas) > idx:
+        alpha = alphas[idx][0,0,:,:]
+        angular_error[alpha < 0.01] = 0
 
-        if len(alphas) > idx:
-          alpha = alphas[idx][0,0,:,:]
-          angular_error[alpha < 0.01] = 0
+      mean_angular_error += angular_error.mean().item()
 
-        mean_angular_error += angular_error.mean().item()
-
-      mean_angular_error /= len(normal_renders)
-      print(f"    Mean Angular Error: {mean_angular_error:.4f} degrees")
+    mean_angular_error /= len(normal_renders)
+    with open(model_path / "mae.txt", 'w') as f:
+      f.write(f"{mean_angular_error:.4f}\n")
 
   except Exception as e:
     print(f"[!] Unable to compute metrics for model {model_path}")
