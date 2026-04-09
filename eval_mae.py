@@ -140,7 +140,7 @@ def evaluate(model_path, source_path):
 
 def readNormalsImages(renders_dir, gt_dir):
   render_normals = []
-  for fname in os.listdir(renders_dir):
+  for fname in natsorted(os.listdir(renders_dir)):
     normal = Image.open(renders_dir / fname)
     render_normals.append(tf.to_tensor(normal).unsqueeze(0)[:, :3, :, :].cuda())
 
