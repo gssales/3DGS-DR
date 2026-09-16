@@ -10,29 +10,31 @@ import torchvision.transforms.functional as tf
 from argparse import ArgumentParser
 
 def angular_error_map(pred: torch.Tensor, gt: torch.Tensor, eps: float = 1e-8):
-  """
-  pred, gt: torch tensors of shape [1, 3, H, W], normalized
-
-  returns: torch tensor of shape [H, W] with angular error in degrees
-            invalid pixels set to NaN
-  """
-  # Per-pixel dot product → [H, W]
-  dot = torch.sum(pred * gt, dim=0)
-
   # Per-pixel norms → [H, W]
   norm_pred = torch.linalg.norm(pred, dim=0)
   norm_gt   = torch.linalg.norm(gt, dim=0)
 
+  # Valid pixels
+  valid = (norm_pred > eps) & (norm_gt > eps)
+
+  # Allocate normalized tensors
+  normalized_pred = torch.zeros_like(pred)
+  normalized_gt   = torch.zeros_like(gt)
+
+  # Normalize ONLY valid pixels
+  normalized_pred[:, valid] = pred[:, valid] / norm_pred[valid]
+  normalized_gt[:, valid]   = gt[:, valid] / norm_gt[valid]
+
+  # Per-pixel dot product → [H, W]
+  dot = torch.sum(normalized_pred * normalized_gt, dim=0)
+
   # Cosine of angle
-  cos_ang = dot / (norm_pred * norm_gt + eps)
-  cos_ang = torch.clamp(cos_ang, -1.0, 1.0)
-
   # Angle in degrees
-  ang_deg = torch.acos(cos_ang) * (180.0 / torch.pi)
+  dot = torch.clamp(dot, -1.0, 1.0)
+  ang_deg = torch.acos(dot) * (180.0 / torch.pi)
 
-  # Mask invalid pixels
-  ang_deg = ang_deg.clone()
-
+  ang_deg[~valid] = 0.0
+  
   return ang_deg
 
 
@@ -125,11 +127,12 @@ def evaluate(model_path, source_path):
 
       if len(alphas) > idx:
         alpha = alphas[idx][0,0,:,:]
-        angular_error[alpha < 0.01] = 0
+        angular_error[alpha < 1.0] = 0
 
       mean_angular_error += angular_error.mean().item()
 
     mean_angular_error /= len(normal_renders)
+    print(f"    Normal Angular Error (MAE): {mean_angular_error:.4f} degrees")
     with open(model_path / "mae.txt", 'w') as f:
       f.write(f"{mean_angular_error:.4f}\n")
 
@@ -150,12 +153,20 @@ def readNormalsImages(renders_dir, gt_dir):
     if fname.endswith("_normal.png"):
       normal = Image.open(gt_dir / fname)
       gt_normals.append(tf.to_tensor(normal).unsqueeze(0)[:, :3, :, :].cuda())
-    if fname.endswith("_alpha.png"):
+    elif fname.endswith("_alpha.png"):
       alpha = Image.open(gt_dir / fname)
       alpha_tensor = tf.to_tensor(alpha).unsqueeze(0)[:, :1, :, :].cuda()
       # should shape like [1,3,H,W]
       alpha_tensor = alpha_tensor.repeat(1,3,1,1)
       alphas.append(alpha_tensor)
+    else:
+      image = Image.open(gt_dir / fname)
+      has_alpha = image.mode in ("RGBA", "LA") or (image.mode == "P" and "transparency" in image.info)
+      if has_alpha:
+        alpha = image.getchannel("A")
+        alpha_tensor = tf.to_tensor(alpha).unsqueeze(0)[:, :1, :, :].cuda()
+        alpha_tensor = alpha_tensor.repeat(1,3,1,1)
+        alphas.append(alpha_tensor)
 
   return render_normals, gt_normals, alphas
 

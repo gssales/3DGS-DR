@@ -36,6 +36,8 @@ def render_fps(dataset : ModelParams, iteration : int, pipeline : PipelineParams
                 render(view, gaussians, pipeline, background)
                 render_time = time.time() - t1
                 render_times.append(render_time)
+        print(f"Average FPS: {1.0/np.array(render_times).mean():.2f} (over {len(render_times)} renders)")
+        print(f"Count of gaussians: {len(gaussians.get_xyz)}")
         with open(dataset.model_path + "/fps.txt", 'w') as fp:
             fps = 1.0/np.array(render_times).mean()
             fp.write('fps:{}\n'.format(fps))
